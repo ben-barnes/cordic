@@ -1,0 +1,42 @@
+name:                cordic
+version:             0.1.0.0
+synopsis:            Experimental implementation of the CORDIC algorithm in Haskell
+description:         Please see README.md
+homepage:            https://github.com/chronon-io/cordic#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Ben Barnes
+maintainer:          ben.w.barnes@gmail.com
+copyright:           Ben Barnes
+category:            Experiment
+build-type:          Simple
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     CORDIC
+  build-depends:       base >= 4.7 && < 5
+                     , fixed
+                     , matrix
+  default-language:    Haskell2010
+
+executable cordic
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , cordic
+  default-language:    Haskell2010
+
+test-suite cordic-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base
+                     , cordic
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/chronon-io/cordic
