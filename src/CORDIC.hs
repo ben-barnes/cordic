@@ -1,25 +1,40 @@
-module CORDIC where
+{- Provides the CORDIC algorithm.
+ - Fixed-point math is used throughout, with bit shifting used as per the
+ - original algorithm.
+ - Two multiplications are performed as the final step to scale the result.
+ -}
+
+module CORDIC 
+(
+  cordic
+) where
 
 import Data.Bits ( shift )
 import Numeric.Fixed
+import Util
 
--- Create a list of angles with tangent ratios [1,  1/(2^n)]
-angleDeltas :: Int -> [Double]
-angleDeltas n = [ atan ( 1 / 2 ^ e ) | e <- [ 0 .. n ] ]
+-- |(index, remainder, (x, y)) used in fold
+type State = (Int,  Fixed, (Fixed, Fixed))
 
--- An infinite list of scaling factors
-klist :: [Double]
-klist = klist' 1 ( k 0 )
+-- |Initialise (x, y) and index, execute fold, scale result
+-- |Parameter `a` is the angle in radians, `n` is the number of iterations
+-- |The result is a pair ( cos a, sin a )
+cordic :: Fixed -> Int -> (Fixed, Fixed)
+cordic a n = let
+    initial = ( 0, a, (1, 0) )
+    (i, _, (c, s)) = foldl step initial $ take n alistF
+    k = klistF !! i
+  in ( k * c, k * s )
 
--- Recursive generator for scaling factors
-klist' :: Int -> Double -> [Double]
-klist' i n = n : klist' ( i + 1 ) (  k i * n )
+-- |Core of the algorithm - generates next (x, y) from current
+step :: State -> Fixed -> State
+step (i, a, v) d
+  | a > 0 = ( i', a - d, mult i   1  v )
+  | a < 0 = ( i', a + d, mult i (-1) v )
+  | otherwise = ( i', a, v )
+    where i' = i + 1
 
--- Scaling factor k at iteration i
-k :: Int -> Double
-k i = 1 / sqrt ( 1 +  2 ^^ (( -2 ) * i ))
-
--- 'Matrix' multiplication step
+-- |Multiplies 'vector' (x, y) by i'th rotation matrix
 mult :: Int -> Fixed -> (Fixed, Fixed) -> (Fixed, Fixed)
 mult i sign (x, y) = let
     sign' = if sign < 0
@@ -29,6 +44,6 @@ mult i sign (x, y) = let
     y' = sign' ( shiftFixed x ( -i )) + y
   in (x', y')
 
--- Shift function which handles wrapping/unwrapping fixed-point values
+-- |Shift function which handles wrapping/unwrapping fixed-point values
 shiftFixed :: Fixed -> Int -> Fixed
 shiftFixed n i = Fixed ( shift ( getFixed n ) i )
